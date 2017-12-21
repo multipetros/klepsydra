@@ -4,7 +4,7 @@ Begin VB.Form Main
    Caption         =   "Klepsydra"
    ClientHeight    =   1320
    ClientLeft      =   150
-   ClientTop       =   795
+   ClientTop       =   780
    ClientWidth     =   2670
    Icon            =   "main.frx":0000
    LinkTopic       =   "Form1"
@@ -150,7 +150,15 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
+Private WithEvents TaskBarProgress As ITaskBarList3
+Attribute TaskBarProgress.VB_VarHelpID = -1
+Private Const TBPF_NOPROGRESS = 0
+Private Const TBPF_INDETERMINATE = 1
+Private Const TBPF_NORMAL = 2
+Private Const TBPF_ERROR = 4
+Private Const TBPF_PAUSED = 8
 Dim Countdown As Date
+Dim CountdownSecs As Integer
 Dim AlarmFile As String
 Dim langID As Integer
 Dim iniPath As String
@@ -222,6 +230,7 @@ Private Sub Form_Load()
     End If
     
     ShowStartControls
+    Set TaskBarProgress = New ITaskBarList3
 End Sub
 Private Sub LoadStrings()
     MenuFile.Caption = LoadResString(langID + 1)
@@ -242,14 +251,16 @@ Private Sub LoadStrings()
 End Sub
 
 Private Sub CommandDone_Click()
-    Dim Wnd As Long
+    Dim wnd As Long
     PlaySound vbNullString, 0, 0
-    Wnd = SetTopMostWindow(Me.hwnd, False)
+    wnd = SetTopMostWindow(Me.hwnd, False)
+    TaskBarProgress.SetProgressState hwnd, TBPF_NOPROGRESS
     ShowStartControls
 End Sub
 
 Private Sub CommandStop_Click()
     TimerCountdown.Enabled = False
+    TaskBarProgress.SetProgressState hwnd, TBPF_NOPROGRESS
     ShowStartControls
 End Sub
 
@@ -257,6 +268,7 @@ Private Sub CommandStart_Click()
     Countdown = ComboHours.List(ComboHours.ListIndex) & ":" _
         & ComboMins.List(ComboMins.ListIndex) & ":" _
         & ComboSecs.List(ComboSecs.ListIndex)
+    CountdownSecs = TimeValue(Countdown) * 86400
     TimerCountdown.Enabled = True
     ShowStopControls
 End Sub
@@ -342,12 +354,20 @@ End Sub
 
 Private Sub TimerCountdown_Timer()
     Dim TimeStr As String
+    Dim LeftSecs As Integer
     
     Countdown = Countdown - (1 / 24 / 60 / 60)
+    
     TimeStr = Format(Countdown, "hh:mm:ss")
     LabelCountdown.Caption = TimeStr
+    Me.Caption = TimeStr & " - " & LoadResString(langID + 18)
+    
+    LeftSecs = CountdownSecs - TimeValue(Countdown) * 86400
+    TaskBarProgress.SetProgressState hwnd, TBPF_NORMAL
+    TaskBarProgress.SetProgressValue hwnd, LeftSecs, CountdownSecs
+    
     If TimeStr = "00:00:00" Then
-        Dim Snd, SndParams, Wnd As Long
+        Dim Snd, SndParams, wnd As Long
         If MenuLoop.Checked Then
             SndParams = SND_FILENAME Or SND_LOOP Or SND_ASYNC
         Else
@@ -355,7 +375,7 @@ Private Sub TimerCountdown_Timer()
         End If
         TimerCountdown.Enabled = False
         Me.SetFocus
-        Wnd = SetTopMostWindow(Me.hwnd, True)
+        wnd = SetTopMostWindow(Me.hwnd, True)
         If MenuMute.Checked = False Then
             Snd = PlaySound(AlarmFile, 0, SndParams)
         End If
@@ -372,6 +392,7 @@ Private Sub ShowStartControls()
     ComboHours.Visible = True
     ComboMins.Visible = True
     ComboSecs.Visible = True
+    Me.Caption = LoadResString(langID + 18)
 End Sub
 
 Private Sub ShowStopControls()
