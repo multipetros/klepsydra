@@ -5,23 +5,43 @@ Begin VB.Form Main
    ClientHeight    =   1320
    ClientLeft      =   150
    ClientTop       =   780
-   ClientWidth     =   2670
+   ClientWidth     =   2880
    Icon            =   "main.frx":0000
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
-   MinButton       =   0   'False
    ScaleHeight     =   1320
-   ScaleWidth      =   2670
+   ScaleWidth      =   2880
    StartUpPosition =   3  'Windows Default
+   Begin VB.CommandButton CommandResume 
+      Default         =   -1  'True
+      Height          =   375
+      Left            =   1560
+      Picture         =   "main.frx":7532
+      Style           =   1  'Graphical
+      TabIndex        =   8
+      Top             =   720
+      Visible         =   0   'False
+      Width           =   495
+   End
+   Begin VB.CommandButton CommandPause 
+      Height          =   375
+      Left            =   1560
+      Picture         =   "main.frx":7591
+      Style           =   1  'Graphical
+      TabIndex        =   7
+      Top             =   720
+      Visible         =   0   'False
+      Width           =   495
+   End
    Begin VB.Timer TimerColorBlink 
       Enabled         =   0   'False
       Interval        =   700
-      Left            =   2160
+      Left            =   2280
       Top             =   720
    End
    Begin VB.ComboBox ComboMins 
       Height          =   315
-      Left            =   960
+      Left            =   1080
       Style           =   2  'Dropdown List
       TabIndex        =   2
       Top             =   240
@@ -29,7 +49,7 @@ Begin VB.Form Main
    End
    Begin VB.ComboBox ComboSecs 
       Height          =   315
-      Left            =   1680
+      Left            =   1800
       Style           =   2  'Dropdown List
       TabIndex        =   3
       Top             =   240
@@ -37,17 +57,17 @@ Begin VB.Form Main
    End
    Begin VB.ComboBox ComboHours 
       Height          =   315
-      Left            =   240
+      Left            =   360
       Style           =   2  'Dropdown List
       TabIndex        =   1
       Top             =   240
       Width           =   735
    End
    Begin VB.CommandButton CommandStart 
-      Caption         =   "S&tart"
-      Default         =   -1  'True
       Height          =   375
-      Left            =   720
+      Left            =   840
+      Picture         =   "main.frx":75E3
+      Style           =   1  'Graphical
       TabIndex        =   0
       Top             =   720
       Width           =   1215
@@ -55,22 +75,23 @@ Begin VB.Form Main
    Begin VB.Timer TimerCountdown 
       Enabled         =   0   'False
       Interval        =   1000
-      Left            =   0
+      Left            =   120
       Top             =   720
    End
    Begin VB.CommandButton CommandStop 
       Cancel          =   -1  'True
-      Caption         =   "Stop"
       Height          =   375
-      Left            =   720
+      Left            =   840
+      Picture         =   "main.frx":7635
+      Style           =   1  'Graphical
       TabIndex        =   4
       Top             =   720
-      Width           =   1215
+      Width           =   735
    End
    Begin VB.CommandButton CommandDone 
       Caption         =   "Done"
       Height          =   375
-      Left            =   720
+      Left            =   840
       TabIndex        =   6
       Top             =   720
       Width           =   1215
@@ -87,7 +108,7 @@ Begin VB.Form Main
          Strikethrough   =   0   'False
       EndProperty
       Height          =   495
-      Left            =   240
+      Left            =   360
       TabIndex        =   5
       Top             =   120
       Width           =   2175
@@ -143,7 +164,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 ' Klepsydra Project Main Form
-' Copyright (c) 2017, Petros Kyladitis <www.multipetros.gr>
+' Copyright (c) 2017-2018, Petros Kyladitis <www.multipetros.gr>
 '
 ' Klepsydra is a Countdown timer prgram with sound alarm
 ' It's open source, distributed under the GNU GPL3
@@ -152,11 +173,19 @@ Option Explicit
 
 Private WithEvents TaskBarProgress As ITaskBarList3
 Attribute TaskBarProgress.VB_VarHelpID = -1
+' Task Bar Progress consts
 Private Const TBPF_NOPROGRESS = 0
 Private Const TBPF_INDETERMINATE = 1
 Private Const TBPF_NORMAL = 2
 Private Const TBPF_ERROR = 4
 Private Const TBPF_PAUSED = 8
+
+' program file names
+Private Const FILENAME_ALARM = "alarm.wav"
+Private Const FILENAME_INI = "klepsydra.ini"
+Private Const FILENAME_FONT = "digital7.ttf"
+Private Const FILENAME_LICENSE = "license.txt"
+
 Dim Countdown As Date
 Dim CountdownSecs As Integer
 Dim AlarmFile As String
@@ -167,7 +196,7 @@ Private Sub Form_Load()
     Dim i, iniRNum As Integer
     Dim iniR As String
     
-    iniPath = SpecialFolder(feUserAppData) & "\klepsydra.ini"
+    iniPath = SpecialFolder(feUserAppData) & "\" & FILENAME_INI
     
     For i = 0 To 60
         If i < 24 Then
@@ -206,7 +235,9 @@ Private Sub Form_Load()
     
     iniR = IniRead("main", "alarm", iniPath)
     If iniR = "" Then
-        AlarmFile = "alarm.wav"
+        AlarmFile = FILENAME_ALARM
+    Else
+        AlarmFile = iniR
     End If
     
     iniR = IniRead("main", "mute", iniPath)
@@ -229,6 +260,11 @@ Private Sub Form_Load()
         MenuEnglish.Checked = True
     End If
     
+    If LoadFont(FILENAME_FONT) > 0 Then
+        LabelCountdown.Font.Name = "Digital-7"
+        LabelCountdown.Font.Size = 24
+    End If
+        
     ShowStartControls
     Set TaskBarProgress = New ITaskBarList3
 End Sub
@@ -240,22 +276,39 @@ Private Sub LoadStrings()
     MenuHelp.Caption = LoadResString(langID + 5)
     MenuAbout.Caption = LoadResString(langID + 6)
     MenuLicense.Caption = LoadResString(langID + 7)
-    CommandStart.Caption = LoadResString(langID + 8)
-    CommandStop.Caption = LoadResString(langID + 9)
+    CommandStart.ToolTipText = LoadResString(langID + 8)
+    CommandStop.ToolTipText = LoadResString(langID + 9)
     CommandDone.Caption = LoadResString(langID + 10)
     MenuLanguage.Caption = LoadResString(langID + 11)
     MenuEnglish.Caption = LoadResString(langID + 12)
     MenuGreek.Caption = LoadResString(langID + 13)
     Me.Caption = LoadResString(langID + 18)
     MenuMute.Caption = LoadResString(langID + 19)
+    CommandPause.ToolTipText = LoadResString(langID + 20)
+    CommandResume.ToolTipText = LoadResString(langID + 21)
 End Sub
 
 Private Sub CommandDone_Click()
     Dim wnd As Long
-    PlaySound vbNullString, 0, 0
+    PlaySound vbNullString, vbNull, 0
     wnd = SetTopMostWindow(Me.hwnd, False)
     TaskBarProgress.SetProgressState hwnd, TBPF_NOPROGRESS
     ShowStartControls
+End Sub
+
+Private Sub CommandResume_Click()
+    TimerCountdown.Enabled = True
+    CommandStop.Enabled = True
+    CommandPause.Visible = True
+    CommandResume.Visible = False
+End Sub
+
+Private Sub CommandPause_Click()
+    TimerCountdown.Enabled = False
+    CommandStop.Enabled = False
+    CommandPause.Visible = False
+    CommandResume.Visible = True
+    TaskBarProgress.SetProgressState hwnd, TBPF_PAUSED
 End Sub
 
 Private Sub CommandStop_Click()
@@ -289,6 +342,10 @@ Private Sub Form_Unload(Cancel As Integer)
         langStr = "en"
     End If
     iniW = IniWrite("main", "language", langStr, iniPath)
+    'release font resource
+    UnloadFont (FILENAME_FONT)
+    'stop music if playing
+    PlaySound vbNullString, vbNull, 0
 End Sub
 
 Private Sub MenuAbout_Click()
@@ -320,7 +377,7 @@ End Sub
 Private Sub MenuLicense_Click()
     Dim LicFile As String
     Dim TaskID As Double
-    LicFile = App.Path & "\license.txt"
+    LicFile = App.path & "\" & FILENAME_LICENSE
     If FileExists(LicFile) = True Then
         On Error GoTo ErrMsg
         TaskID = Shell("notepad.exe " & LicFile, vbNormalFocus)
@@ -355,6 +412,7 @@ End Sub
 Private Sub TimerCountdown_Timer()
     Dim TimeStr As String
     Dim LeftSecs As Integer
+    Dim Snd, SndParams, wnd As Long
     
     Countdown = Countdown - (1 / 24 / 60 / 60)
     
@@ -367,18 +425,17 @@ Private Sub TimerCountdown_Timer()
     TaskBarProgress.SetProgressValue hwnd, LeftSecs, CountdownSecs
     
     If TimeStr = "00:00:00" Then
-        Dim Snd, SndParams, wnd As Long
+        TimerCountdown.Enabled = False
         If MenuLoop.Checked Then
-            SndParams = SND_FILENAME Or SND_LOOP Or SND_ASYNC
+            SndParams = SND_FILENAME Or SND_ASYNC Or SND_LOOP
         Else
             SndParams = SND_FILENAME Or SND_ASYNC
         End If
-        TimerCountdown.Enabled = False
+        If MenuMute.Checked = False Then
+            PlaySound AlarmFile, vbNull, SndParams
+        End If
         Me.SetFocus
         wnd = SetTopMostWindow(Me.hwnd, True)
-        If MenuMute.Checked = False Then
-            Snd = PlaySound(AlarmFile, 0, SndParams)
-        End If
         ShowDoneControls
     End If
 End Sub
@@ -388,6 +445,8 @@ Private Sub ShowStartControls()
     CommandStart.Visible = True
     CommandStop.Visible = False
     CommandDone.Visible = False
+    CommandPause.Visible = False
+    CommandResume.Visible = False
     LabelCountdown.Visible = False
     ComboHours.Visible = True
     ComboMins.Visible = True
@@ -401,6 +460,8 @@ Private Sub ShowStopControls()
     CommandStart.Visible = False
     CommandStop.Visible = True
     CommandDone.Visible = False
+    CommandPause.Visible = True
+    CommandResume.Visible = False
     LabelCountdown.Visible = True
     ComboHours.Visible = False
     ComboMins.Visible = False
@@ -412,6 +473,8 @@ Private Sub ShowDoneControls()
     CommandStart.Visible = False
     CommandStop.Visible = False
     CommandDone.Visible = True
+    CommandPause.Visible = False
+    CommandResume.Visible = False
     LabelCountdown.Visible = True
     ComboHours.Visible = False
     ComboMins.Visible = False

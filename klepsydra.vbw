@@ -1,10 +1,11 @@
 Main = 0, 0, 856, 940, , 26, 26, 913, 468, C
-Sound = 87, 134, 974, 576, C
+Sound = 87, 134, 974, 576, 
 IniRW = 4, 8, 875, 434, 
 WndPos = 182, 182, 1053, 608, C
 SelectAlarm = 208, 208, 1079, 634, 
-OpenURL = 0, 0, 603, 333, 
+OpenURL = 0, 0, 603, 333, C
 SysFolders = 26, 26, 914, 468, 
-OpenFileLib = 182, 182, 1070, 624, 
+OpenFileLib = 182, 182, 1070, 624, C
 modOLECommon = 125, 125, 1474, 788, C
 ITaskBarList3 = 250, 250, 1599, 913, C
+ExtFonts = 240, 173, 914, 836, 

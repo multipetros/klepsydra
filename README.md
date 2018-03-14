@@ -1,6 +1,6 @@
 # Klepsydra 
-v1.1  
-Copytight (c) 2017, [Petros Kyladitis](http://www.multipetros.gr)  
+v1.2  
+Copytight (c) 2017-2018, [Petros Kyladitis](http://www.multipetros.gr)  
   
 [English](#en) - [Ελληνικά](#el)
 
@@ -16,11 +16,17 @@ Klepsydra is written in Visual Basic 6.0, so the runtime library of Visual Basic
 ![Screenshot](https://raw.githubusercontent.com/multipetros/klepsydra/master/screenshot.png)]
 
 ## Download
- * [Setup package](https://github.com/multipetros/klepsydra/releases/download/v1.1/klepsydra-1.1_setup.exe)
- * [Portable in zip archive](https://github.com/multipetros/klepsydra/releases/download/v1.1/klepsydra-1.1_bin.zip)
+ * [Setup package](https://github.com/multipetros/klepsydra/releases/download/v1.2/klepsydra-1.2_setup.exe)
+ * [Portable in zip archive](https://github.com/multipetros/klepsydra/releases/download/v1.2/klepsydra-1.2_bin.zip)
 
 
 ## Change Log
+### v1.2
+ * Add pause and resume functionality
+ * Change button captions to graphic, and make captions as tooltips
+ * Add window minimize button
+ * Seven-segment font for countdown
+ * Fix sometimes no-sound playing bug
 ### v1.1
  * Countdown time on caption & taskbar
  * Show taskbar progress bar _(supported at Windows NT6+)_
@@ -45,10 +51,16 @@ If you think that this program is helpful for you and you are willing to support
 ![Στιγμιότυπο](https://raw.githubusercontent.com/multipetros/klepsydra/master/screenshot.png)]
 
 ## Κατέβασμα
- * [Πακέτο εγκατάστασης](https://github.com/multipetros/klepsydra/releases/download/v1.1/klepsydra-1.1_setup.exe)
- * [Φορητή μορφή σε αρχείο zip](https://github.com/multipetros/klepsydra/releases/download/v1.1/klepsydra-1.1_bin.zip)
+ * [Πακέτο εγκατάστασης](https://github.com/multipetros/klepsydra/releases/download/v1.2/klepsydra-1.2_setup.exe)
+ * [Φορητή μορφή σε αρχείο zip](https://github.com/multipetros/klepsydra/releases/download/v1.2/klepsydra-1.2_bin.zip)
 
 ## Αλλαγές
+### v1.2
+ * Προσθήκη λειτουργικότητας παύσης και συνέχισης
+ * Αλλαγή των λεζάντων των κουμπιών σε γραφικά, και μετατροπή των λεζάντων σε συμβουλές
+ * Προσθήκη κουμπιού ελαχιστοποίησης του παραθύρου
+ * Γραμματοσειρά εφτά-τμημάτων για την αντίστροφη μέτρηση
+ * Διόρθωση του σφάλματος μη αναπαραγωγής ήχου κάποιες στιγμές
 ### v1.1
  * Εμφάνιση υπολοιπόμενου χρόνου στον τίτλο και στη γραμμή εργασιών
  * Εμφάνιση μπάρας προόδου στη γραμμή εργασιών _(υποστηρίζεται στα Windows NT6+)_
