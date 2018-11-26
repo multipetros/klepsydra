@@ -128,6 +128,13 @@ Begin VB.Form Main
          Caption         =   "Ala&rm Sound"
          Shortcut        =   ^S
       End
+      Begin VB.Menu MenuSeparator2 
+         Caption         =   "-"
+      End
+      Begin VB.Menu MenuShutdown 
+         Caption         =   "S&hutdown PC"
+         Shortcut        =   ^H
+      End
       Begin VB.Menu MenuSeparator1 
          Caption         =   "-"
       End
@@ -186,6 +193,26 @@ Private Const FILENAME_INI = "klepsydra.ini"
 Private Const FILENAME_FONT = "digital7.ttf"
 Private Const FILENAME_LICENSE = "license.txt"
 
+Private Const INI_SECT_MAIN = "main"
+Private Const INI_HOURS = "hours"
+Private Const INI_MINS = "mins"
+Private Const INI_SECS = "secs"
+Private Const INI_LOOP = "loop"
+Private Const INI_ALARM = "alarm"
+Private Const INI_MUTE = "mute"
+Private Const INI_SHUTDOWN = "shutdown"
+Private Const INI_LANGUAGE = "language"
+Private Const INI_TOP = "top"
+Private Const INI_LEFT = "left"
+
+Private Const LANGUAGE_EN = "en"
+Private Const LANGUAGE_EL = "el"
+Private Const LANGUAGE_EN_ID = 100
+Private Const LANGUAGE_EL_ID = 200
+
+Private Const COUNTDOWN_FONT_NAME = "Digital-7"
+Private Const COUNTDOWN_FONT_SIZE = 24
+
 Dim Countdown As Date
 Dim CountdownSecs As Integer
 Dim AlarmFile As String
@@ -194,6 +221,7 @@ Dim iniPath As String
 
 Private Sub Form_Load()
     Dim i, iniRNum As Integer
+    Dim iniRNumL As Long
     Dim iniR As String
     
     iniPath = SpecialFolder(feUserAppData) & "\" & FILENAME_INI
@@ -206,19 +234,19 @@ Private Sub Form_Load()
         ComboMins.AddItem (Format(i, "00"))
     Next i
     
-    iniR = IniRead("main", "hours", iniPath)
+    iniR = IniRead(INI_SECT_MAIN, INI_HOURS, iniPath)
     iniRNum = CInt(IIf(IsNumeric(iniR), iniR, 0))
     If iniRNum > -1 And iniRNum < 25 Then
         ComboHours.ListIndex = iniRNum
     End If
     
-    iniR = IniRead("main", "mins", iniPath)
+    iniR = IniRead(INI_SECT_MAIN, INI_MINS, iniPath)
     iniRNum = CInt(IIf(IsNumeric(iniR), iniR, 0))
     If iniRNum > -1 And iniRNum < 61 Then
         ComboMins.ListIndex = iniRNum
     End If
     
-    iniR = IniRead("main", "secs", iniPath)
+    iniR = IniRead(INI_SECT_MAIN, INI_SECS, iniPath)
     iniRNum = CInt(IIf(IsNumeric(iniR), iniR, 10))
     If iniRNum > -1 And iniRNum < 61 Then
         ComboSecs.ListIndex = iniRNum
@@ -226,43 +254,63 @@ Private Sub Form_Load()
         ComboSecs.ListIndex = 5
     End If
     
-    iniR = IniRead("main", "loop", iniPath)
+    iniR = IniRead(INI_SECT_MAIN, INI_LOOP, iniPath)
     If iniR = "False" Then
         MenuLoop.Checked = False
     Else
         MenuLoop.Checked = True
     End If
     
-    iniR = IniRead("main", "alarm", iniPath)
+    iniR = IniRead(INI_SECT_MAIN, INI_ALARM, iniPath)
     If iniR = "" Then
         AlarmFile = FILENAME_ALARM
     Else
         AlarmFile = iniR
     End If
     
-    iniR = IniRead("main", "mute", iniPath)
+    iniR = IniRead(INI_SECT_MAIN, INI_MUTE, iniPath)
     If iniR = "True" Then
         MenuMute.Checked = True
     Else
         MenuMute.Checked = False
     End If
     
-    iniR = IniRead("main", "language", iniPath)
-    If iniR = "gr" Then
-        langID = 200
+    iniR = IniRead(INI_SECT_MAIN, INI_SHUTDOWN, iniPath)
+    If iniR = "True" Then
+        MenuShutdown.Checked = True
+    Else
+        MenuShutdown.Checked = False
+    End If
+    
+    iniR = IniRead(INI_SECT_MAIN, INI_LANGUAGE, iniPath)
+    If iniR = LANGUAGE_EL Then
+        langID = LANGUAGE_EL_ID
         LoadStrings
         MenuGreek.Checked = True
         MenuEnglish.Checked = False
     Else
-        langID = 100
+        langID = LANGUAGE_EN_ID
         LoadStrings
         MenuGreek.Checked = False
         MenuEnglish.Checked = True
     End If
     
     If LoadFont(FILENAME_FONT) > 0 Then
-        LabelCountdown.Font.Name = "Digital-7"
-        LabelCountdown.Font.Size = 24
+        LabelCountdown.Font.Name = COUNTDOWN_FONT_NAME
+    End If
+    
+    LabelCountdown.Font.Size = COUNTDOWN_FONT_SIZE
+    
+    iniR = IniRead(INI_SECT_MAIN, INI_LEFT, iniPath)
+    iniRNumL = CLng(IIf(IsNumeric(iniR), iniR, 0))
+    If iniRNumL > 0 Then
+        Me.Left = iniRNumL
+    End If
+    
+    iniR = IniRead(INI_SECT_MAIN, INI_TOP, iniPath)
+    iniRNumL = CLng(IIf(IsNumeric(iniR), iniR, 0))
+    If iniRNumL > 0 Then
+        Me.Top = iniRNumL
     End If
         
     ShowStartControls
@@ -286,6 +334,7 @@ Private Sub LoadStrings()
     MenuMute.Caption = LoadResString(langID + 19)
     CommandPause.ToolTipText = LoadResString(langID + 20)
     CommandResume.ToolTipText = LoadResString(langID + 21)
+    MenuShutdown.Caption = LoadResString(langID + 22)
 End Sub
 
 Private Sub CommandDone_Click()
@@ -328,20 +377,22 @@ End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
     Dim iniW As Boolean
-    iniW = IniWrite("main", "hours", ComboHours.Text, iniPath)
-    iniW = IniWrite("main", "mins", ComboMins.Text, iniPath)
-    iniW = IniWrite("main", "secs", ComboSecs.Text, iniPath)
-    iniW = IniWrite("main", "secs", ComboSecs.Text, iniPath)
-    iniW = IniWrite("main", "loop", MenuLoop.Checked, iniPath)
-    iniW = IniWrite("main", "alarm", AlarmFile, iniPath)
-    iniW = IniWrite("main", "mute", MenuMute.Checked, iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_HOURS, ComboHours.Text, iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_MINS, ComboMins.Text, iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_SECS, ComboSecs.Text, iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_LOOP, MenuLoop.Checked, iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_ALARM, AlarmFile, iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_MUTE, MenuMute.Checked, iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_SHUTDOWN, MenuShutdown.Checked, iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_TOP, CStr(Me.Top), iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_LEFT, CStr(Me.Left), iniPath)
     Dim langStr As String
-    If langID = 200 Then
-        langStr = "gr"
+    If langID = LANGUAGE_EL_ID Then
+        langStr = LANGUAGE_EL
     Else
-        langStr = "en"
+        langStr = LANGUAGE_EN
     End If
-    iniW = IniWrite("main", "language", langStr, iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_LANGUAGE, langStr, iniPath)
     'release font resource
     UnloadFont (FILENAME_FONT)
     'stop music if playing
@@ -359,7 +410,7 @@ End Sub
 Private Sub MenuEnglish_Click()
     MenuEnglish.Checked = True
     MenuGreek.Checked = False
-    langID = 100
+    langID = LANGUAGE_EN_ID
     LoadStrings
 End Sub
 
@@ -370,7 +421,7 @@ End Sub
 Private Sub MenuGreek_Click()
     MenuGreek.Checked = True
     MenuEnglish.Checked = False
-    langID = 200
+    langID = LANGUAGE_EL_ID
     LoadStrings
 End Sub
 
@@ -379,15 +430,13 @@ Private Sub MenuLicense_Click()
     Dim TaskID As Double
     LicFile = App.path & "\" & FILENAME_LICENSE
     If FileExists(LicFile) = True Then
-        On Error GoTo ErrMsg
+        On Error GoTo ErrMsgNotepad
         TaskID = Shell("notepad.exe " & LicFile, vbNormalFocus)
         Exit Sub
     End If
-ErrMsg:
-    Dim res As VbMsgBoxResult
+ErrMsgNotepad:
     Dim browse As Long
-    res = MsgBox(LoadResString(langID + 16), vbCritical + vbYesNo, LoadResString(langID + 17))
-    If res = vbYes Then
+    If MsgBox(LoadResString(langID + 16), vbCritical + vbYesNo, LoadResString(langID + 17)) = vbYes Then
         browse = OpenBrowser("http://www.gnu.org/licenses/gpl.html")
     End If
 End Sub
@@ -398,6 +447,10 @@ End Sub
 
 Private Sub MenuMute_Click()
     MenuMute.Checked = Not MenuMute.Checked
+End Sub
+
+Private Sub MenuShutdown_Click()
+    MenuShutdown.Checked = Not MenuShutdown.Checked
 End Sub
 
 Private Sub TimerColorBlink_Timer()
@@ -437,7 +490,17 @@ Private Sub TimerCountdown_Timer()
         Me.SetFocus
         wnd = SetTopMostWindow(Me.hwnd, True)
         ShowDoneControls
+        If MenuShutdown.Checked = True Then
+            On Error GoTo ErrMsgShutdown
+            Shell "shutdown -s -f -t 30", vbHide
+            If MsgBox(LoadResString(langID + 23), vbQuestion & vbYesNo, LoadResString(langID + 22)) = vbYes Then
+                Shell "shutdown -a", vbHide
+            End If
+        End If
     End If
+    Exit Sub
+ErrMsgShutdown:
+    MsgBox LoadResString(langID + 24), vbCritical, LoadResString(langID + 25)
 End Sub
 
 Private Sub ShowStartControls()
