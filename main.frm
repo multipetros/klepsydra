@@ -12,6 +12,18 @@ Begin VB.Form Main
    ScaleHeight     =   1320
    ScaleWidth      =   2880
    StartUpPosition =   3  'Windows Default
+   Begin VB.Timer TimerStopwatch 
+      Enabled         =   0   'False
+      Interval        =   1000
+      Left            =   2040
+      Top             =   720
+   End
+   Begin VB.Timer TimerOvertimeCount 
+      Enabled         =   0   'False
+      Interval        =   1000
+      Left            =   480
+      Top             =   720
+   End
    Begin VB.CommandButton CommandResume 
       Default         =   -1  'True
       Height          =   375
@@ -36,7 +48,7 @@ Begin VB.Form Main
    Begin VB.Timer TimerColorBlink 
       Enabled         =   0   'False
       Interval        =   700
-      Left            =   2280
+      Left            =   2400
       Top             =   720
    End
    Begin VB.ComboBox ComboMins 
@@ -115,6 +127,10 @@ Begin VB.Form Main
    End
    Begin VB.Menu MenuFile 
       Caption         =   "&File"
+      Begin VB.Menu MenuAlarmSound 
+         Caption         =   "Ala&rm Sound"
+         Shortcut        =   ^S
+      End
       Begin VB.Menu MenuMute 
          Caption         =   "&Mute"
          Shortcut        =   ^M
@@ -124,16 +140,23 @@ Begin VB.Form Main
          Checked         =   -1  'True
          Shortcut        =   ^L
       End
-      Begin VB.Menu MenuAlarmSound 
-         Caption         =   "Ala&rm Sound"
-         Shortcut        =   ^S
-      End
-      Begin VB.Menu MenuSeparator2 
+      Begin VB.Menu MenuSeparator3 
          Caption         =   "-"
+      End
+      Begin VB.Menu MenuOvertime 
+         Caption         =   "Show o&vertime"
+         Shortcut        =   ^O
       End
       Begin VB.Menu MenuShutdown 
          Caption         =   "S&hutdown PC"
          Shortcut        =   ^H
+      End
+      Begin VB.Menu MenuSeparator2 
+         Caption         =   "-"
+      End
+      Begin VB.Menu MenuStopwatch 
+         Caption         =   "Stop&watch mode"
+         Shortcut        =   ^W
       End
       Begin VB.Menu MenuSeparator1 
          Caption         =   "-"
@@ -204,6 +227,8 @@ Private Const INI_SHUTDOWN = "shutdown"
 Private Const INI_LANGUAGE = "language"
 Private Const INI_TOP = "top"
 Private Const INI_LEFT = "left"
+Private Const INI_OVERTIME = "overtime"
+Private Const INI_STOPWATCH = "stopwatch"
 
 Private Const LANGUAGE_EN = "en"
 Private Const LANGUAGE_EL = "el"
@@ -212,9 +237,12 @@ Private Const LANGUAGE_EL_ID = 200
 
 Private Const COUNTDOWN_FONT_NAME = "Digital-7"
 Private Const COUNTDOWN_FONT_SIZE = 24
+Private Const TIME_ZERO = "00:00:00"
 
 Dim Countdown As Date
 Dim CountdownSecs As Integer
+Dim Overtime As Date
+Dim Stopwatch As Date
 Dim AlarmFile As String
 Dim langID As Integer
 Dim iniPath As String
@@ -275,11 +303,25 @@ Private Sub Form_Load()
         MenuMute.Checked = False
     End If
     
+    iniR = IniRead(INI_SECT_MAIN, INI_OVERTIME, iniPath)
+    If iniR = "True" Then
+        MenuOvertime.Checked = True
+    Else
+        MenuOvertime.Checked = False
+    End If
+    
     iniR = IniRead(INI_SECT_MAIN, INI_SHUTDOWN, iniPath)
     If iniR = "True" Then
         MenuShutdown.Checked = True
     Else
         MenuShutdown.Checked = False
+    End If
+    
+    iniR = IniRead(INI_SECT_MAIN, INI_STOPWATCH, iniPath)
+    If iniR = "True" Then
+        MenuStopwatch.Checked = True
+    Else
+        MenuStopwatch.Checked = False
     End If
     
     iniR = IniRead(INI_SECT_MAIN, INI_LANGUAGE, iniPath)
@@ -314,6 +356,7 @@ Private Sub Form_Load()
     End If
         
     ShowStartControls
+    LoadStopwatchMode
     Set TaskBarProgress = New ITaskBarList3
 End Sub
 Private Sub LoadStrings()
@@ -335,10 +378,21 @@ Private Sub LoadStrings()
     CommandPause.ToolTipText = LoadResString(langID + 20)
     CommandResume.ToolTipText = LoadResString(langID + 21)
     MenuShutdown.Caption = LoadResString(langID + 22)
+    MenuOvertime.Caption = LoadResString(langID + 26)
+    MenuStopwatch.Caption = LoadResString(langID + 27)
+End Sub
+
+Private Sub LoadStopwatchMode()
+    LabelCountdown.Caption = TIME_ZERO
+    LabelCountdown.Visible = MenuStopwatch.Checked
+    ComboHours.Visible = Not MenuStopwatch.Checked
+    ComboMins.Visible = Not MenuStopwatch.Checked
+    ComboSecs.Visible = Not MenuStopwatch.Checked
 End Sub
 
 Private Sub CommandDone_Click()
     Dim wnd As Long
+    TimerOvertimeCount.Enabled = False
     PlaySound vbNullString, vbNull, 0
     wnd = SetTopMostWindow(Me.hwnd, False)
     TaskBarProgress.SetProgressState hwnd, TBPF_NOPROGRESS
@@ -346,32 +400,49 @@ Private Sub CommandDone_Click()
 End Sub
 
 Private Sub CommandResume_Click()
-    TimerCountdown.Enabled = True
     CommandStop.Enabled = True
     CommandPause.Visible = True
     CommandResume.Visible = False
+    If MenuStopwatch.Checked = False Then
+        TimerCountdown.Enabled = True
+    Else
+        TimerStopwatch.Enabled = True
+    End If
 End Sub
 
 Private Sub CommandPause_Click()
-    TimerCountdown.Enabled = False
     CommandStop.Enabled = False
     CommandPause.Visible = False
     CommandResume.Visible = True
-    TaskBarProgress.SetProgressState hwnd, TBPF_PAUSED
+    If MenuStopwatch.Checked = False Then
+        TimerCountdown.Enabled = False
+        TaskBarProgress.SetProgressState hwnd, TBPF_PAUSED
+    Else
+        TimerStopwatch.Enabled = False
+    End If
 End Sub
 
 Private Sub CommandStop_Click()
-    TimerCountdown.Enabled = False
-    TaskBarProgress.SetProgressState hwnd, TBPF_NOPROGRESS
+    If MenuStopwatch.Checked = False Then
+        TimerCountdown.Enabled = False
+        TaskBarProgress.SetProgressState hwnd, TBPF_NOPROGRESS
+    Else
+        TimerStopwatch.Enabled = False
+        LabelCountdown.Caption = TIME_ZERO
+    End If
     ShowStartControls
 End Sub
 
 Private Sub CommandStart_Click()
-    Countdown = ComboHours.List(ComboHours.ListIndex) & ":" _
-        & ComboMins.List(ComboMins.ListIndex) & ":" _
-        & ComboSecs.List(ComboSecs.ListIndex)
-    CountdownSecs = TimeValue(Countdown) * 86400
-    TimerCountdown.Enabled = True
+    If MenuStopwatch.Checked = False Then
+        Countdown = ComboHours.List(ComboHours.ListIndex) & ":" _
+            & ComboMins.List(ComboMins.ListIndex) & ":" _
+            & ComboSecs.List(ComboSecs.ListIndex)
+        CountdownSecs = TimeValue(Countdown) * 86400
+        TimerCountdown.Enabled = True
+    Else
+        TimerStopwatch.Enabled = True
+    End If
     ShowStopControls
 End Sub
 
@@ -383,7 +454,9 @@ Private Sub Form_Unload(Cancel As Integer)
     iniW = IniWrite(INI_SECT_MAIN, INI_LOOP, MenuLoop.Checked, iniPath)
     iniW = IniWrite(INI_SECT_MAIN, INI_ALARM, AlarmFile, iniPath)
     iniW = IniWrite(INI_SECT_MAIN, INI_MUTE, MenuMute.Checked, iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_OVERTIME, MenuOvertime.Checked, iniPath)
     iniW = IniWrite(INI_SECT_MAIN, INI_SHUTDOWN, MenuShutdown.Checked, iniPath)
+    iniW = IniWrite(INI_SECT_MAIN, INI_STOPWATCH, MenuStopwatch.Checked, iniPath)
     iniW = IniWrite(INI_SECT_MAIN, INI_TOP, CStr(Me.Top), iniPath)
     iniW = IniWrite(INI_SECT_MAIN, INI_LEFT, CStr(Me.Left), iniPath)
     Dim langStr As String
@@ -449,8 +522,17 @@ Private Sub MenuMute_Click()
     MenuMute.Checked = Not MenuMute.Checked
 End Sub
 
+Private Sub MenuOvertime_Click()
+    MenuOvertime.Checked = Not MenuOvertime.Checked
+End Sub
+
 Private Sub MenuShutdown_Click()
     MenuShutdown.Checked = Not MenuShutdown.Checked
+End Sub
+
+Private Sub MenuStopwatch_Click()
+    MenuStopwatch.Checked = Not MenuStopwatch.Checked
+    LoadStopwatchMode
 End Sub
 
 Private Sub TimerColorBlink_Timer()
@@ -477,7 +559,7 @@ Private Sub TimerCountdown_Timer()
     TaskBarProgress.SetProgressState hwnd, TBPF_NORMAL
     TaskBarProgress.SetProgressValue hwnd, LeftSecs, CountdownSecs
     
-    If TimeStr = "00:00:00" Then
+    If TimeStr = TIME_ZERO Then
         TimerCountdown.Enabled = False
         If MenuLoop.Checked Then
             SndParams = SND_FILENAME Or SND_ASYNC Or SND_LOOP
@@ -497,38 +579,64 @@ Private Sub TimerCountdown_Timer()
                 Shell "shutdown -a", vbHide
             End If
         End If
+        If MenuOvertime.Checked = True Then
+            Overtime = TimeStr
+            TimerOvertimeCount.Enabled = True
+        End If
     End If
     Exit Sub
 ErrMsgShutdown:
     MsgBox LoadResString(langID + 24), vbCritical, LoadResString(langID + 25)
 End Sub
 
+Private Sub TimerOvertimeCount_Timer()
+    Dim TimeStr As String
+    Overtime = Overtime + (1 / 24 / 60 / 60)
+    TimeStr = Format(Overtime, "-hh:mm:ss")
+    LabelCountdown.Caption = TimeStr
+    Me.Caption = TimeStr & " - " & LoadResString(langID + 18)
+End Sub
+
+Private Sub TimerStopwatch_Timer()
+    Dim TimeStr As String
+    Stopwatch = Stopwatch + (1 / 24 / 60 / 60)
+    TimeStr = Format(Stopwatch, "hh:mm:ss")
+    LabelCountdown.Caption = TimeStr
+    Me.Caption = TimeStr & " - " & LoadResString(langID + 18)
+End Sub
+
 Private Sub ShowStartControls()
-    TimerColorBlink.Enabled = False
     CommandStart.Visible = True
     CommandStop.Visible = False
     CommandDone.Visible = False
     CommandPause.Visible = False
     CommandResume.Visible = False
-    LabelCountdown.Visible = False
-    ComboHours.Visible = True
-    ComboMins.Visible = True
-    ComboSecs.Visible = True
+    If MenuStopwatch.Checked = False Then
+        LabelCountdown.Visible = False
+        ComboHours.Visible = True
+        ComboMins.Visible = True
+        ComboSecs.Visible = True
+    End If
+    MenuStopwatch.Enabled = True
+    TimerColorBlink.Enabled = False
     Me.Caption = LoadResString(langID + 18)
 End Sub
 
 Private Sub ShowStopControls()
-    LabelCountdown.ForeColor = vbButtonText
-    LabelCountdown.BackColor = vbButtonFace
     CommandStart.Visible = False
     CommandStop.Visible = True
     CommandDone.Visible = False
     CommandPause.Visible = True
     CommandResume.Visible = False
-    LabelCountdown.Visible = True
-    ComboHours.Visible = False
-    ComboMins.Visible = False
-    ComboSecs.Visible = False
+    If MenuStopwatch.Checked = False Then
+        LabelCountdown.Visible = True
+        ComboHours.Visible = False
+        ComboMins.Visible = False
+        ComboSecs.Visible = False
+        LabelCountdown.ForeColor = vbButtonText
+        LabelCountdown.BackColor = vbButtonFace
+    End If
+    MenuStopwatch.Enabled = False
 End Sub
 
 Private Sub ShowDoneControls()

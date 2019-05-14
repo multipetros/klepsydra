@@ -1,6 +1,6 @@
 # Klepsydra 
-v1.3  
-Copytight (c) 2017-2018, [Petros Kyladitis](http://www.multipetros.gr)  
+v1.4  
+Copytight (c) 2017-2019, [Petros Kyladitis](http://www.multipetros.gr)  
   
 [English](#en) - [Ελληνικά](#el)
 
@@ -16,11 +16,14 @@ Klepsydra is written in Visual Basic 6.0, so the runtime library of Visual Basic
 ![Screenshot](https://raw.githubusercontent.com/multipetros/klepsydra/master/screenshot.png)]
 
 ## Download
- * [Setup package](https://github.com/multipetros/klepsydra/releases/download/v1.3/klepsydra-1.3_setup.exe)
- * [Portable in zip archive](https://github.com/multipetros/klepsydra/releases/download/v1.3/klepsydra-1.3_bin.zip)
+ * [Setup package](https://github.com/multipetros/klepsydra/releases/download/v1.4/klepsydra-1.4_setup.exe)
+ * [Portable in zip archive](https://github.com/multipetros/klepsydra/releases/download/v1.4/klepsydra-1.4_bin.zip)
 
 
 ## Change Log
+### v1.4
+ * Add option of countdown overtime display
+ * Add stopwatch mode
 ### v1.3
  * Add option for system shutdown
  * Load window at last position
@@ -54,10 +57,13 @@ If you think that this program is helpful for you and you are willing to support
 ![Στιγμιότυπο](https://raw.githubusercontent.com/multipetros/klepsydra/master/screenshot.png)]
 
 ## Κατέβασμα
- * [Πακέτο εγκατάστασης](https://github.com/multipetros/klepsydra/releases/download/v1.3/klepsydra-1.3_setup.exe)
- * [Φορητή μορφή σε αρχείο zip](https://github.com/multipetros/klepsydra/releases/download/v1.3/klepsydra-1.3_bin.zip)
+ * [Πακέτο εγκατάστασης](https://github.com/multipetros/klepsydra/releases/download/v1.4/klepsydra-1.4_setup.exe)
+ * [Φορητή μορφή σε αρχείο zip](https://github.com/multipetros/klepsydra/releases/download/v1.4/klepsydra-1.4_bin.zip)
 
 ## Αλλαγές
+### v1.4
+ * Δυνατότητα εμφάνισης υπέρβασης χρόνου αντίστροφης μέτρησης
+ * Προσθήκη λειτουργίας χρονόμετρου
 ### v1.3
  * Προσθήκη επιλογής τερματισμού της λειτουργίας του συστήματος
  * Φόρτωση του παραθύρου στην τελευταία του θέση επί της οθόνης
